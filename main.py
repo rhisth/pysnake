@@ -192,7 +192,13 @@ class Game:
         self.draw_food()
         self.draw_snake()
         self.draw_walls()
-        pyxel.text(10, 10, f"Score is {self.score}", 7)
+        if self.map_variant == 1:
+            color = 7
+        elif self.map_variant == 2:
+            color = 7
+        elif self.map_variant == 3:
+            color = 0
+        pyxel.text(10, 10, f"Score is {self.score}", color)
 
     def draw_snake(self):
         for cell in self.snake:
