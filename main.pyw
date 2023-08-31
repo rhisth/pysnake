@@ -1,5 +1,4 @@
 import pyxel
-from time import sleep
 from random import randint, choice
 
 WIDTH = 384
