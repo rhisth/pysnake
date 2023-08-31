@@ -1,6 +1,6 @@
 import pyxel
 from time import sleep
-from random import randint
+from random import randint, choice
 
 WIDTH = 384
 HEIGHT = 216
@@ -24,8 +24,6 @@ class Game:
         pyxel.icon(icon, 4)
         pyxel.fullscreen(True)
 
-        self.food_coordinates = None
-        self.food_sprite = None
         self.fullscreen = True
 
         self.reset()
@@ -34,10 +32,11 @@ class Game:
         pyxel.run(self.update, self.draw)
 
     def reset(self):
-        self.map_variant = randint(1, 3)
         self.snake = [SnakeCell((6, 6), (1, 0), (24, 0)), SnakeCell((5, 6), (1, 0), (40, 0)), SnakeCell((4, 6), (1, 0), (40, 0))]
-        self.score = 0
         self.death = False
+        self.food = Object(None, None)
+        self.map_variant = randint(1, 2)
+        self.score = 0
         self.generate_map()
         self.generate_walls()
         self.generate_food()
@@ -56,8 +55,8 @@ class Game:
         if not self.death:
             self.update_direction()
             self.update_snake()
-            self.check_food()
             self.check_death()
+            self.check_food()
 
     def update_direction(self):
         if pyxel.btnp(pyxel.KEY_UP):
@@ -115,10 +114,18 @@ class Game:
         for cell in self.snake:
             if self.snake[0] != cell and self.snake[0].coordinates == cell.coordinates:
                 self.kill_snake()
+                break
 
         for wall in self.walls:
             if self.snake[0].coordinates == wall.coordinates:
                 self.kill_snake()
+                break
+
+    def check_food(self):
+        if self.snake[0].coordinates == self.food.coordinates:
+            self.score += 1
+            self.generate_food()
+            self.feed_snake()
 
     def kill_snake(self):
         self.death = True
@@ -127,7 +134,10 @@ class Game:
         self.snake.pop(0)
 
     def feed_snake(self):
-        self.snake.append(SnakeCell((self.snake[-1].coordinates[0] - self.snake[-1].direction[0], self.snake[-1].coordinates[1] - self.snake[-1].direction[1]), self.snake[-1].direction, self.get_sprite(self.snake[-1])))
+        coordinates = (self.snake[-1].coordinates[0] - self.snake[-1].direction[0], self.snake[-1].coordinates[1] - self.snake[-1].direction[1])
+        direction = self.snake[-1].direction
+        sprite = self.get_sprite(self.snake[-1])
+        self.snake.append(SnakeCell(coordinates, direction, sprite))
 
     def get_sprite(self, cell, dead=False):
         if cell == self.snake[0]:
@@ -155,11 +165,23 @@ class Game:
             elif cell.direction == (1, 0) or cell.direction == (-1, 0):
                 return (40, 0)
 
+    def get_available_space(self):
+        list = []
+        for i in range(int(HEIGHT / 8)):
+            for j in range(int(WIDTH / 8)):
+                coordinates = (j, i)
+                list.append(coordinates)
+        for cell in self.snake:
+            list.remove(cell.coordinates)
+        for wall in self.walls:
+            list.remove(wall.coordinates)
+        return list
+
     def generate_map(self):
         self.map = []
-        for i in range(27):
+        for i in range(int(HEIGHT / 8)):
             list = []
-            for j in range(48):
+            for j in range(int(WIDTH / 8)):
                 if randint(1, 10) < 10:
                     tile = (0, self.map_variant * 8)
                 else:
@@ -169,22 +191,16 @@ class Game:
 
     def generate_walls(self):
         self.walls = []
+        space = self.get_available_space()
         for i in range(20):
-            coordinates = (randint(0, 47), randint(0, 26))
+            coordinates = choice(space)
             sprite = (randint(8, 11) * 8, self.map_variant * 8)
             self.walls.append(Object(coordinates, sprite))
+            space.remove(coordinates)
 
     def generate_food(self):
-        self.food_coordinates = (randint(0, 47), randint(0, 26))
-        self.food_sprite = (randint(4, 7) * 8, self.map_variant * 8)
-
-    def check_food(self):
-        for cell in self.snake:
-            if cell.coordinates == self.food_coordinates:
-                self.score += 1
-                self.generate_food()
-                self.feed_snake()
-                break
+        self.food.coordinates = choice(self.get_available_space())
+        self.food.sprite = (randint(4, 7) * 8, self.map_variant * 8)
 
     def draw(self):
         pyxel.cls(0)
@@ -192,24 +208,7 @@ class Game:
         self.draw_food()
         self.draw_snake()
         self.draw_walls()
-        if self.map_variant == 1:
-            color = 7
-        elif self.map_variant == 2:
-            color = 7
-        elif self.map_variant == 3:
-            color = 0
-        pyxel.text(10, 10, f"Score is {self.score}", color)
-
-    def draw_snake(self):
-        for cell in self.snake:
-            pyxel.blt(cell.coordinates[0] * 8, cell.coordinates[1] * 8, 0, cell.sprite[0], cell.sprite[1], 8, 8)
-
-    def draw_food(self):
-        pyxel.blt(self.food_coordinates[0] * 8, self.food_coordinates[1] * 8, 0, self.food_sprite[0], self.food_sprite[1], 8, 8)
-
-    def draw_walls(self):
-        for wall in self.walls:
-            pyxel.blt(wall.coordinates[0] * 8, wall.coordinates[1] * 8, 0, wall.sprite[0], wall.sprite[1], 8, 8)
+        self.draw_score()
 
     def draw_map(self):
         x = -1
@@ -220,4 +219,19 @@ class Game:
                 x += 1
                 pyxel.blt(x * 8, y * 8, 0, tile[0], tile[1], 8, 8)
             x = -1
+
+    def draw_food(self):
+        pyxel.blt(self.food.coordinates[0] * 8, self.food.coordinates[1] * 8, 0, self.food.sprite[0], self.food.sprite[1], 8, 8)
+
+    def draw_snake(self):
+        for cell in self.snake:
+            pyxel.blt(cell.coordinates[0] * 8, cell.coordinates[1] * 8, 0, cell.sprite[0], cell.sprite[1], 8, 8)
+
+    def draw_walls(self):
+        for wall in self.walls:
+            pyxel.blt(wall.coordinates[0] * 8, wall.coordinates[1] * 8, 0, wall.sprite[0], wall.sprite[1], 8, 8)
+
+    def draw_score(self):
+        pyxel.text(10, 10, f"Score is {self.score}", 1)
+
 Game()
