@@ -26,8 +26,6 @@ class Game:
         self.fullscreen = True
 
         self.reset()
-        self.feed_snake()
-        self.feed_snake()
         pyxel.run(self.update, self.draw)
 
     def reset(self):
