@@ -232,6 +232,6 @@ class Game:
             pyxel.blt(wall.coordinates[0] * 8, wall.coordinates[1] * 8, 0, wall.sprite[0], wall.sprite[1], 8, 8)
 
     def draw_score(self):
-        pyxel.text(10, 10, f"Score is {self.score}", 1)
+        pyxel.text(10, 10, f"Score is {self.score}", 0)
 
 Game()
