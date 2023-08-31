@@ -1,6 +1,6 @@
 # PySnake
 
-![gif](https://github.com/rhisth/pysnake/assets/96009471/0ea53f41-33f8-4922-a40b-378ae9239172)
+![gif](https://github.com/rhisth/pysnake/assets/96009471/07cf4382-8bde-4f14-92ef-e1391066922a)
 
 ## Управление
 
